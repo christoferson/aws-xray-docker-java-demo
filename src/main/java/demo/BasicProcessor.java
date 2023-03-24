@@ -14,6 +14,7 @@ import com.amazonaws.xray.AWSXRayRecorder;
 import com.amazonaws.xray.AWSXRayRecorderBuilder;
 import com.amazonaws.xray.entities.Subsegment;
 import com.amazonaws.xray.entities.TraceID;
+import com.amazonaws.xray.plugins.ECSPlugin;
 
 import demo.client.AwsS3Client;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -26,13 +27,16 @@ public class BasicProcessor {
 
 	public static void main(String[] args) {
 		
-		System.out.printf("Application Version: 1.8 漢字　%n");
+		System.out.printf("Application Version: 1.3 漢字　%n");
 		System.out.printf("Locale: %s　%n", Locale.getDefault());
 		
 		ResourceBundle resource = ResourceBundle.getBundle("application");
 		//System.out.println(resource.getString("s3.bucket.name"));
 		
-		AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard();
+		System.out.printf("Initializing Xray %n");
+		
+		AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard()
+				.withPlugin(new ECSPlugin());
 		AWSXRayRecorder xRayRecorder = builder.build();
 		AWSXRay.setGlobalRecorder(xRayRecorder);
 		
@@ -41,6 +45,7 @@ public class BasicProcessor {
 		xRayRecorder.beginSegment(traceId.toString());
 		xRayRecorder.endSegment();
 
+		System.out.printf("******************************************************** %n");
 		
 		AWSXRay.beginSegment("MyBatch");
 		
