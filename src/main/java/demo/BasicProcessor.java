@@ -10,8 +10,10 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.AWSXRayRecorder;
 import com.amazonaws.xray.AWSXRayRecorderBuilder;
 import com.amazonaws.xray.entities.Subsegment;
+import com.amazonaws.xray.entities.TraceID;
 
 import demo.client.AwsS3Client;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -29,14 +31,16 @@ public class BasicProcessor {
 		
 		ResourceBundle resource = ResourceBundle.getBundle("application");
 		//System.out.println(resource.getString("s3.bucket.name"));
-		/*
-		try {
-			AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder
-                    .standard();
-			AWSXRay.setGlobalRecorder(builder.build());
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-		}*/
+		
+		AWSXRayRecorderBuilder builder = AWSXRayRecorderBuilder.standard();
+		AWSXRayRecorder xRayRecorder = builder.build();
+		AWSXRay.setGlobalRecorder(xRayRecorder);
+		
+		TraceID traceId = TraceID.create();
+		
+		xRayRecorder.beginSegment(traceId.toString());
+		xRayRecorder.endSegment();
+
 		
 		AWSXRay.beginSegment("MyBatch");
 		
