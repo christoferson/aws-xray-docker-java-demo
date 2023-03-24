@@ -38,6 +38,8 @@ public class BasicProcessor {
 			System.err.println(e.getMessage());
 		}*/
 		
+		AWSXRay.beginSegment("MyBatch");
+		
 		System.out.printf("******************************************************** %n");
 		
 		AwsS3Client s3 = newS3ClientInstance();
@@ -57,6 +59,8 @@ public class BasicProcessor {
 		demoS3GetObject(s3, resource);
 		
 		demoS3PutObject(s3, resource);
+		
+		AWSXRay.endSegment();
 		
 	}
 	
@@ -85,7 +89,7 @@ public class BasicProcessor {
 
 	private static void demoS3ListBucket(AwsS3Client s3) {
 		
-		Subsegment subsegment = AWSXRay.beginSubsegment("Save Game");
+		Subsegment subsegment = AWSXRay.beginSubsegment("DemoS3ListBucket");
 		
 		String awsRegion = System.getenv("APP_AWS_REGION");
 		
