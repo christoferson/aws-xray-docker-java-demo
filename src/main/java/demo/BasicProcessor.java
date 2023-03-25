@@ -7,7 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.AWSXRayRecorder;
@@ -16,6 +18,7 @@ import com.amazonaws.xray.entities.Subsegment;
 import com.amazonaws.xray.entities.TraceID;
 import com.amazonaws.xray.plugins.ECSPlugin;
 
+import demo.client.AwsCloudwatchClient;
 import demo.client.AwsS3Client;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
@@ -68,6 +71,8 @@ public class BasicProcessor {
 		demoS3GetObject(s3, resource);
 		
 		demoS3PutObject(s3, resource);
+		
+		demoPutMetric();
 		
 		AWSXRay.endSegment();
 		
@@ -241,6 +246,22 @@ public class BasicProcessor {
 		System.out.printf("******************************************************** %n");
 	}
 	
+	private static void demoPutMetric() {
+		
+		AwsCloudwatchClient cw = newCloudwatchClientInstance();
+		try {
+			
+			cw.metricPut("DemoXrayNamespace", "ExecutionCount", ThreadLocalRandom.current().nextDouble(1, 8), 
+					Map.of("InstanceID", "1662602716588"));
+			
+		} catch (Exception e) {
+			System.err.println("Failed to put metric. " + e.getMessage());
+		}
+	
+		System.out.printf("******************************************************** %n");
+		
+	}
+	
 	private static String resolveAwsBucketName(ResourceBundle resource) {
 		
 		String bucket = System.getenv("APP_AWS_BUCKET_NAME");
@@ -294,5 +315,22 @@ public class BasicProcessor {
 		}
 		return s3;
 	}
-
+	
+	private static AwsCloudwatchClient newCloudwatchClientInstance() {
+		String awsKey = System.getenv("APP_AWS_KEY");
+		String awsSecret = System.getenv("APP_AWS_SECRET");
+		String awsRegion = System.getenv("APP_AWS_REGION");
+		Region region = Region.of(awsRegion);
+		AwsCloudwatchClient client = null;
+		if (awsKey != null && awsSecret != null) {
+			System.out.printf("Creating Cloudwatch Client: Found ENV Credentials (APP_AWS_KEY, APP_AWS_SECRET). %n");
+			AwsCredentials credentials = AwsBasicCredentials.create(awsKey, awsSecret); 
+			AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(credentials);
+			client = new AwsCloudwatchClient(credentialsProvider, region);
+		} else {
+			System.out.printf("Creating Cloudwatch Client: Using Container Credentials. %n");
+			client = new AwsCloudwatchClient(region);
+		}
+		return client;
+	}
 }
